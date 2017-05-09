@@ -37,8 +37,7 @@ class Cache: NSCache<NSURL, NSData> {
 }
 
 class ImageCollectionViewController: UICollectionViewController,
-                                     UICollectionViewDelegateFlowLayout,
-                                     CHTCollectionViewDelegateWaterfallLayout {
+                                     UICollectionViewDelegateFlowLayout {
 
     var tweets: [Array<Twitter.Tweet>] = [] {
         didSet {
@@ -49,11 +48,11 @@ class ImageCollectionViewController: UICollectionViewController,
         }
     }
     
-    private var images = [TweetMedia]()
+    fileprivate var images = [TweetMedia]()
     private var cache = Cache()
     
     private var layoutFlow = UICollectionViewFlowLayout()
-    private var layoutWaterfall = CHTCollectionViewWaterfallLayout ()
+    private var layoutWaterfall = CHTCollectionViewWaterfallLayout()
     
     
     var predefinedSize: CGSize {
@@ -66,7 +65,7 @@ class ImageCollectionViewController: UICollectionViewController,
             Constants.sectionInset.right * 2.0) / Constants.columnCountFlowLayout)
     }
     
-    private struct Constants {
+    fileprivate struct Constants {
         
         static let minImageCellWidth: CGFloat = 60
         static let sizeSetting = CGSize(width: 120.0, height: 120.0)
@@ -124,7 +123,7 @@ class ImageCollectionViewController: UICollectionViewController,
         if let layout = collectionView?.collectionViewLayout {
             if layout is CHTCollectionViewWaterfallLayout {
                 collectionView?.setCollectionViewLayout(layoutFlow, animated: true)
-            }else {
+            } else {
                 collectionView?.setCollectionViewLayout(layoutWaterfall, animated: true)
             }
         }
@@ -137,7 +136,6 @@ class ImageCollectionViewController: UICollectionViewController,
         }
     }
     
-  
     deinit {
         cache.removeAllObjects()
     }
@@ -168,11 +166,69 @@ class ImageCollectionViewController: UICollectionViewController,
             return cell
     }
     
-   
-    // MARK: - CHTCollectionViewDelegateWaterfallLayout
+// MARK: - UICollectionViewDelegateFlowLayout
     func collectionView(_ collectionView: UICollectionView,
-                        layout collectionViewLayout: UICollectionViewLayout,
-                        sizeForItemAtCHT indexPath: IndexPath) -> CGSize {
+             layout collectionViewLayout: UICollectionViewLayout,
+                 sizeForItemAt indexPath: IndexPath) -> CGSize {
+        
+        let ratio = CGFloat(images[indexPath.row].media.aspectRatio)
+        var sizeSetting =  predefinedSize
+        var maxCellWidth = collectionView.bounds.size.width
+
+        if let layout = collectionViewLayout as? UICollectionViewFlowLayout {
+            maxCellWidth = collectionView.bounds.size.width  -
+                        layout.minimumInteritemSpacing * 2.0 -
+                        layout.sectionInset.right * 2.0
+            sizeSetting = layout.itemSize
+        }
+        
+        let size = CGSize(width: sizeSetting.width * scale,
+                          height: sizeSetting.height * scale)
+        let cellWidth = min (max (size.width , Constants.minImageCellWidth),maxCellWidth)
+        return (CGSize(width: cellWidth, height: cellWidth / ratio))
+    }
+    
+    
+    override func collectionView(_ collectionView: UICollectionView,
+                          canMoveItemAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    override func collectionView(_ collectionView: UICollectionView,
+                       moveItemAt sourceIndexPath: IndexPath,
+                          to destinationIndexPath: IndexPath) {
+        
+        let temp = images[destinationIndexPath.row]
+        images[destinationIndexPath.row] = images[sourceIndexPath.row]
+        images[sourceIndexPath.row] = temp
+        collectionView.collectionViewLayout.invalidateLayout()
+    }
+   
+    // MARK: - Navigation
+    
+    @IBAction private func toRootViewController(_ sender: UIBarButtonItem) {
+       _ = navigationController?.popToRootViewController(animated: true)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == Storyboard.SegueIdentifier {
+            if let ttvc = segue.destination as? TweetTableViewController {
+                if let cell = sender as? ImageCollectionViewCell,
+                    let tweetMedia = cell.tweetMedia {
+                    
+                     ttvc.newTweets = [tweetMedia.tweet]
+                }
+            }
+        }
+    }
+ }
+
+extension ImageCollectionViewController:
+                                CHTCollectionViewDelegateWaterfallLayout{
+
+    func collectionView(_ collectionView: UICollectionView,
+             layout collectionViewLayout: UICollectionViewLayout,
+              sizeForItemAtCHT indexPath: IndexPath) -> CGSize {
         
         adjustWaterfallColumnCount(collectionView)
         let ratio = CGFloat(images[indexPath.row].media.aspectRatio)
@@ -199,62 +255,6 @@ class ImageCollectionViewController: UICollectionViewController,
                      Constants.columnCountWaterfallMax)
         }
     }
-    
-// MARK: - UICollectionViewDelegateFlowLayout
-    func collectionView(_ collectionView: UICollectionView,
-                        layout collectionViewLayout: UICollectionViewLayout,
-                        sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let ratio = CGFloat(images[indexPath.row].media.aspectRatio)
-        var sizeSetting =  predefinedSize
-        var maxCellWidth = collectionView.bounds.size.width
 
-        if let layout = collectionViewLayout as? UICollectionViewFlowLayout {
-            maxCellWidth = collectionView.bounds.size.width  -
-                layout.minimumInteritemSpacing * 2.0 -
-                layout.sectionInset.right * 2.0
-            sizeSetting = layout.itemSize
-        }
-        
-        let size = CGSize(width: sizeSetting.width * scale,
-                          height: sizeSetting.height * scale)
-        let cellWidth = min (max (size.width , Constants.minImageCellWidth),maxCellWidth)
-        return (CGSize(width: cellWidth, height: cellWidth / ratio))
-    }
-    
-    
-    override func collectionView(_ collectionView: UICollectionView,
-                          canMoveItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    
-    override func collectionView(_ collectionView: UICollectionView,
-                       moveItemAt sourceIndexPath: IndexPath,
-                          to destinationIndexPath: IndexPath) {
-        
-        let temp = images[destinationIndexPath.row]
-        images[destinationIndexPath.row] = images[sourceIndexPath.row]
-        images[sourceIndexPath.row] = temp
-        collectionView.collectionViewLayout.invalidateLayout()
-    }
+}
 
-
-   
-    // MARK: - Navigation
-    
-    @IBAction private func toRootViewController(_ sender: UIBarButtonItem) {
-       _ = navigationController?.popToRootViewController(animated: true)
-    }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == Storyboard.SegueIdentifier {
-            if let ttvc = segue.destination as? TweetTableViewController {
-                if let cell = sender as? ImageCollectionViewCell,
-                    let tweetMedia = cell.tweetMedia {
-                    
-                     ttvc.newTweets = [tweetMedia.tweet]
-                }
-            }
-        }
-    }
-
- }

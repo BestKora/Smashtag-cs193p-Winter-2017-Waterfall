@@ -14,10 +14,11 @@ class ImageCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var imageView: UIImageView!
     
     var cache: Cache?
-    
+ 
     var tweetMedia: TweetMedia?{
-        didSet {
-            guard let url = tweetMedia?.media.url else { return }
+    didSet {
+            imageView.image = nil
+            guard let url = tweetMedia?.media.url else {  return }
             spinner?.startAnimating()
             
             if let imageData = cache?[url] {	// cached?
