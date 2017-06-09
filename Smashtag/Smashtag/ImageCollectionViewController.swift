@@ -225,10 +225,10 @@ class ImageCollectionViewController: UICollectionViewController,
 
 extension ImageCollectionViewController:
                                 CHTCollectionViewDelegateWaterfallLayout{
-
+    
     func collectionView(_ collectionView: UICollectionView,
-             layout collectionViewLayout: UICollectionViewLayout,
-              sizeForItemAtCHT indexPath: IndexPath) -> CGSize {
+                        layout collectionViewLayout: UICollectionViewLayout,
+                        sizeForItemAtCHT indexPath: IndexPath) -> CGSize {
         
         adjustWaterfallColumnCount(collectionView)
         let ratio = CGFloat(images[indexPath.row].media.aspectRatio)
@@ -255,6 +255,5 @@ extension ImageCollectionViewController:
                      Constants.columnCountWaterfallMax)
         }
     }
-
 }
 

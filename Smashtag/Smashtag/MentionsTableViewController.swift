@@ -181,7 +181,8 @@ class MentionsTableViewController: UITableViewController {
                 if let ivc = segue.destination as? ImageViewController,
                     let cell = sender as? ImageTableViewCell {
                     
-                    ivc.imageURL = cell.imageUrl
+           //       ivc.imageURL = cell.imageUrl
+                    ivc.image = cell.tweetImage.image
                     ivc.title = title
                     
                 }
